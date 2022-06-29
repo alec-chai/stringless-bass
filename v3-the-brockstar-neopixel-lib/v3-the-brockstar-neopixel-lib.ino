@@ -351,9 +351,9 @@ if (del_chi > 180){
 }
 
 bow_angle = del_chi;
-bow_angle = constrain(bow_angle, -45,45);
+bow_angle = constrain(bow_angle, -45,60);
 bow_pos_prev = bow_pos;
-bow_pos = map(int(bow_angle), -45,45,0,3);// gets the different strings
+bow_pos = map(int(bow_angle), -45,60,0,3);// gets the different strings
 bow_pos = constrain(bow_pos,0,3);
 stringfreq = low_string_freq * pow(1.3348,bow_pos); // upright bass tuned in fourths
 //stringfreq = low_string_freq * pow(1.5,bow_pos); // Cello tuned in fifths
