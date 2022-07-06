@@ -1,0 +1,19 @@
+*Pick And Place List
+*Company=
+*Author=
+*eMail=
+*
+*Project=bow-stringless-bass 2
+*Date=10:21:10
+*CreatedBy=Fritzing 0.9.10b.2022-05-14.CD-1807-0-29c2cede
+*
+*
+*Coordinates in mm, always center of component
+*Origin 0/0=Lower left corner of PCB
+*Rotation in degree (0-360, math. pos.)
+*
+*No;Value;Package;X;Y;Rotation;Side;Name
+1;;;20.4428;-38.7746;0;Bottom;Part2
+2;;[THT];32.5828;-15.6248;0;Bottom;S1
+3;;rj45-8;10.9178;-0.364556;0;Bottom;U1
+4;;;10.2828;-24.2932;180;Top;NEOPIXEL1
