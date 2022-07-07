@@ -42,7 +42,7 @@ Code was updated to be a little more legible, however most changes in this code 
 
   Another suitable solution was to flip the signs of q1 and q2. 
 
-- The pluck velocity code also needed to change in sign, so the code was updated to `plucksig = -gyro.z();`
+- The pluck velocity code also needed to change in sign, so the code was updated to ` plucksig = -gyro.z();`
 
 
 
