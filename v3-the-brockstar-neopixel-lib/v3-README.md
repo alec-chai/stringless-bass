@@ -37,12 +37,12 @@ Code was updated to be a little more legible, however most changes in this code 
 
 - On this iteration, the orientation of the BNO was flipped 180 degrees about the Y-axis, leading to issues with the quaternion code that converts to Euler angles. This was remedied by flipping the sign of the q0prime and q3prime quaternions as:
 
-  - 'q0prime = -quat.w();'
-  - 'q3prime = -quat.z();'
+  - `q0prime = -quat.w();`
+  - `q3prime = -quat.z();`
 
   Another suitable solution was to flip the signs of q1 and q2. 
 
-- The pluck velocity code also needed to change in sign, so the code was updated to 'plucksig = -gyro.z();'
+- The pluck velocity code also needed to change in sign, so the code was updated to `plucksig = -gyro.z();`
 
 
 
