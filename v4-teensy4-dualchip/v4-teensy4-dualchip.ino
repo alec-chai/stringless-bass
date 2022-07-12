@@ -18,8 +18,8 @@ bugs, and clarifying variable names for future reference.
 #include "AcousticBs_samples.h"
 
 #include <Adafruit_NeoPixel.h>
-#define b_PIN        3 // neopixel pin
-#define n_PIN        4 // neopixel pin
+#define b_PIN        4 // neopixel pin
+#define n_PIN        5 // neopixel pin
 
 // How many NeoPixels are attached to the Arduino?
 #define b_NUMPIXELS 28 // 
@@ -34,7 +34,7 @@ AudioSynthWavetable      string1;          //xy=125,106
 AudioSynthWaveform       waveform1;      //xy=132,61
 AudioEffectEnvelope      envelope1;
 AudioMixer4              mixer1;         //xy=353,103
-AudioOutputAnalog        dac1;           //xy=506,102
+AudioOutputPT8211        dac1;           //xy=506,102
 AudioFilterStateVariable filter1;
 AudioConnection          patchCord1(string1, 0, mixer1, 1);
 AudioConnection          patchCord2(waveform1, 0, filter1, 0);
@@ -114,7 +114,7 @@ float low_string_freq = 41.2; // E1 for lowest bass note
 float filter_scale;
 
   //for the button on bow
-Bounce button0 = Bounce(2, 15);
+Bounce button0 = Bounce(3, 15);
 int button0_value;
 
 // the following use the gyro velocity about the z-axis to get the pluck signal
@@ -228,7 +228,10 @@ base_freq_discrete = low_string_freq * pow(2,float(fretnum)/12.0); // for discre
 bow_vel_calc(); //determines a bow velocity out_vx
 
 waveform1.frequency(base_freq);
-string1.setFrequency(base_freq);
+
+if (string1.isPlaying()) {
+  string1.setFrequency(base_freq);
+}
 
 if (button0.fallingEdge()) {
   envelope1.sustain(1.0);
@@ -288,8 +291,8 @@ void potcalc(){
     read_raw1_ave = 0.0;// some more averaging on the analog reads
     read_raw2_ave = 0.0;  
     for(int i = 0; i <2; i++){      
-    read_raw1 = analogRead(A6);
-    read_raw2 = analogRead(A7);
+    read_raw1 = analogRead(A8);
+    read_raw2 = analogRead(A9);
     read_raw1_ave = read_raw1_ave + read_raw1;
     read_raw2_ave = read_raw2_ave + read_raw2;
 }
