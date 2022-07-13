@@ -18,14 +18,14 @@ bugs, and clarifying variable names for future reference.
 #include "AcousticBs_samples.h"
 
 #include <Adafruit_NeoPixel.h>
-#define b_PIN        4 // neopixel pin
-#define n_PIN        5 // neopixel pin
+#define b_PIN        3 // neopixel pin
+#define n_PIN        4 // neopixel pin
 
 // How many NeoPixels are attached to the Arduino?
 #define b_NUMPIXELS 28 // 
 Adafruit_NeoPixel b_pixels(b_NUMPIXELS, b_PIN, NEO_GRB + NEO_KHZ800);
 
-#define n_NUMPIXELS 112 // 
+#define n_NUMPIXELS 101 // 
 Adafruit_NeoPixel n_pixels(n_NUMPIXELS, n_PIN, NEO_GRB + NEO_KHZ800);
 
 
