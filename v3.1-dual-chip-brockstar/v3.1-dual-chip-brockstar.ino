@@ -316,27 +316,67 @@ if (read_raw1_ave > 0.9*resolution) { // this will be true if string is not fret
 }
 
 void bow_angle_calc(){
-//imu::Quaternion quat = bno.getQuat();
-//
-//q0prime = -quat.w(); // go through the math
-//q1prime = quat.x();
-//q2prime = quat.y();
-//q3prime = -quat.z(); 
+//q0prime = -q0prime; // go through the math
+//q1prime = q1prime;
+//q2prime = q2prime;
+//q3prime = -q3prime;
 
-q0prime = -q0prime; // go through the math
+q0prime = -q0prime; // fake solution
 q1prime = q1prime;
 q2prime = q2prime;
 q3prime = -q3prime;
 
-//q0prime = q0prime; // crazy attempt at sandwich product
-//q1prime = 2*q2prime + 2*q3prime - q1prime;
-//q2prime = 2*q1prime + q2prime + 2*q3prime;
-//q3prime = 2*q2prime - 2*q1prime - q3prime; 
+//q0prime = -q1prime; // rotate by 180 degrees in the x direction
+//q1prime = q0prime;
+//q2prime = -q3prime;
+//q3prime = q2prime;
+//
+//q0prime = -q2prime; // rotate by 180 degrees in the y direction
+//q1prime = q3prime;
+//q2prime = q0prime;
+//q3prime = -q1prime;
+//
+//q0prime = -q3prime; // rotate by 180 degrees in the z direction
+//q1prime = -q2prime;
+//q2prime = q1prime;
+//q3prime = q0prime;
 
-q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
-q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
-q2 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
-q3 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;
+//q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
+//q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
+//q2 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
+//q3 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;
+
+
+float q000 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
+float q111 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
+float q222 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
+float q333 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;
+
+float q00 = q000; // nothing
+float q11 = q111;
+float q22 = q222;
+float q33 = q333;
+
+q0 = q00;// do nothing
+q1 = q11;
+q2 = q22;
+q3 = q33;
+
+//q0 = -q11;//rotate about x 180 deg
+//q1 = q00;
+//q2 = -q33;
+//q3 = q22;
+
+//q0 = -q22;//rotate about y 180 deg
+//q1 = q33;
+//q2 = q00;
+//q3 = -q11;
+
+//q0 = -q33;//rotate about z 180 deg
+//q1 = -q22;
+//q2 = q11;
+//q3 = q00;
+
 
 // q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q1prime;//rotate about x
 // q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q0prime;
