@@ -288,8 +288,8 @@ void potcalc(){
     read_raw1_ave = 0.0;// some more averaging on the analog reads
     read_raw2_ave = 0.0;  
     for(int i = 0; i <2; i++){      
-    read_raw1 = analogRead(A6);
-    read_raw2 = analogRead(A7);
+    read_raw1 = analogRead(A7);
+    read_raw2 = analogRead(A6);
     read_raw1_ave = read_raw1_ave + read_raw1;
     read_raw2_ave = read_raw2_ave + read_raw2;
 }
@@ -323,10 +323,15 @@ void bow_angle_calc(){
 //q2prime = quat.y();
 //q3prime = -quat.z(); 
 
-q0prime = q0prime; // crazy attempt
-q1prime = 2*q2prime + 2*q3prime - q1prime;
-q2prime = 2*q1prime + q2prime + 2*q3prime;
-q3prime = 2*q2prime - 2*q1prime - q3prime; 
+q0prime = -q0prime; // go through the math
+q1prime = q1prime;
+q2prime = q2prime;
+q3prime = -q3prime;
+
+//q0prime = q0prime; // crazy attempt at sandwich product
+//q1prime = 2*q2prime + 2*q3prime - q1prime;
+//q2prime = 2*q1prime + q2prime + 2*q3prime;
+//q3prime = 2*q2prime - 2*q1prime - q3prime; 
 
 q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
 q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
