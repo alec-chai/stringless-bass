@@ -19,16 +19,17 @@ bugs, and clarifying variable names for future reference.
 #include <Bounce.h>
 #include "AcousticBs_samples.h"
 
-#include <FastLED.h>
+#include <Adafruit_NeoPixel.h>
+#define b_PIN        3 // neopixel pin
+#define n_PIN        4 // neopixel pin
 
-#if FASTLED_VERSION < 3001000
-#error "Requires FastLED 3.1 or later; check github for latest code."
-#endif
+// How many NeoPixels are attached to the Arduino?
+#define b_NUMPIXELS 10 // 
+Adafruit_NeoPixel b_pixels(b_NUMPIXELS, b_PIN, NEO_GRB + NEO_KHZ800);
 
-// Define universal parameters for both strips
-#define LED_TYPE    WS2812
-#define COLOR_ORDER GRB
-#define BRIGHTNESS  255
+#define n_NUMPIXELS 108 // 
+Adafruit_NeoPixel n_pixels(n_NUMPIXELS, n_PIN, NEO_GRB + NEO_KHZ800);
+
 
 // Bow parameters
 #define b_DATA_PIN    3
@@ -39,11 +40,6 @@ bugs, and clarifying variable names for future reference.
 #define n_DATA_PIN    4
 //#define CLK_PIN   4
 #define n_NUM_LEDS    108
-
-// Initialize led method
-CRGBArray<b_NUM_LEDS> b_leds;
-CRGBArray<n_NUM_LEDS> n_leds;
-
 
 // GUItool: begin automatically generated code
 AudioSynthWavetable      string1;          //xy=125,106
@@ -95,6 +91,7 @@ float out_ax_prev = 0.0;
 
 int bow_angle = 0;
 int bow_pos;
+int bow_pos_prev;
 
 float stringfreq;
 
@@ -181,23 +178,10 @@ void setup(void) {
 
   Serial.begin(115200);
 
-  // Initialize bow LEDs
-  FastLED.addLeds<LED_TYPE, b_DATA_PIN, COLOR_ORDER>(b_leds, b_NUM_LEDS)
-    .setCorrection(TypicalLEDStrip)
-    .setDither(BRIGHTNESS < 255);
-
-  // Initialize neck LEDs
-  FastLED.addLeds<LED_TYPE, n_DATA_PIN, COLOR_ORDER>(n_leds, n_NUM_LEDS)
-    .setCorrection(TypicalLEDStrip)
-    .setDither(BRIGHTNESS < 255);
-
-
-  // Master brightness
-  FastLED.setBrightness(120);
-  
-  FastLED.clear();
-  FastLED.show();
-  
+ b_pixels.begin();
+  b_pixels.clear();
+  n_pixels.begin();
+  n_pixels.clear();
   AudioMemory(20);
   
   analogReadResolution(bitnumber);
@@ -304,7 +288,7 @@ if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
   }
   bow_action(); // bows the string
 }
-FastLED.show();
+
 Serial.println(timervariable);
 timervariable = 0;
 
@@ -389,54 +373,77 @@ if (del_chi > 180){
 }
 
 bow_angle = del_chi;
-bow_angle = constrain(bow_angle, -45,45);
-bow_pos = map(int(bow_angle), -45,45,0,3);// gets the different strings
+bow_angle = constrain(bow_angle, -45,60);
+bow_pos_prev = bow_pos;
+bow_pos = map(int(bow_angle), -45,60,0,3);// gets the different strings
 bow_pos = constrain(bow_pos,0,3);
 stringfreq = low_string_freq * pow(1.3348,bow_pos); // upright bass tuned in fourths
 //stringfreq = low_string_freq * pow(1.5,bow_pos); // Cello tuned in fifths
 //stringfreq = 130.8;
 
-switch (bow_pos) {
+if (bow_pos != bow_pos_prev) {
+  switch (bow_pos) {
     case 0:    // red
-    FastLED.clear();
-    b_leds[0] = CRGB(50, 0, 0);
-    b_leds[9] = CRGB(50, 0, 0);
-    for (int i=0; i<n_NUM_LEDS; i++) {
-      n_leds[i] = CRGB(50,0,0);
+    b_pixels.clear();
+    
+    b_pixels.setPixelColor(1, b_pixels.Color(50, 0, 0));
+    b_pixels.setPixelColor(8, b_pixels.Color(50, 0, 0));
+
+    b_pixels.show();
+    
+    n_pixels.clear();
+    for (int i=0; i<n_NUMPIXELS; i++) {
+      n_pixels.setPixelColor(i, n_pixels.Color(50, 0, 0));
     }
-   // FastLED.show();      
+    n_pixels.show();     
       break;
       
     case 1:    // yellow
-    FastLED.clear();
-    b_leds[1] = CRGB(50, 50, 0);
-    b_leds[8] = CRGB(50, 50, 0);
-    for (int i=0; i<n_NUM_LEDS; i++) {
-      n_leds[i] = CRGB(50,50,0);
+    b_pixels.clear();
+    
+    b_pixels.setPixelColor(2, b_pixels.Color(50, 50, 0));
+    b_pixels.setPixelColor(7, b_pixels.Color(50, 50, 0));
+
+    b_pixels.show();
+    
+    n_pixels.clear();
+    for (int i=0; i<n_NUMPIXELS; i++) {
+      n_pixels.setPixelColor(i, n_pixels.Color(50, 50, 0));
     }
-  //  FastLED.show();      
+    n_pixels.show();     
       break;
       
     case 2:    // green
-    FastLED.clear();
-    b_leds[2] = CRGB(0, 50, 0);
-    b_leds[7] = CRGB(0, 50, 0);
-    for (int i=0; i<n_NUM_LEDS; i++) {
-      n_leds[i] = CRGB(0,50,0);
+    b_pixels.clear();
+    
+    b_pixels.setPixelColor(3, b_pixels.Color(0, 50, 0));
+    b_pixels.setPixelColor(6, b_pixels.Color(0, 50, 0));
+
+    b_pixels.show();
+    
+    n_pixels.clear();
+    for (int i=0; i<n_NUMPIXELS; i++) {
+      n_pixels.setPixelColor(i, n_pixels.Color(0, 50, 0));
     }
-  //  FastLED.show();     
+    n_pixels.show();   
       break;
       
     case 3:    // blue
-    FastLED.clear();
-    b_leds[3] = CRGB(0, 0, 50);
-    b_leds[6] = CRGB(0, 0, 50);
-    for (int i=0; i<n_NUM_LEDS; i++) {
-      n_leds[i] = CRGB(0,0,50);
+    b_pixels.clear();
+    
+    b_pixels.setPixelColor(4, b_pixels.Color(0, 0, 50));
+    b_pixels.setPixelColor(5, b_pixels.Color(0, 0, 50));
+
+    b_pixels.show();
+    
+    n_pixels.clear();
+    for (int i=0; i<n_NUMPIXELS; i++) {
+      n_pixels.setPixelColor(i, n_pixels.Color(0, 0, 50));
     }
-  //  FastLED.show();         
+    n_pixels.show();  
       break; 
   }
+ }
 }
 
 void pluckcalc(){
