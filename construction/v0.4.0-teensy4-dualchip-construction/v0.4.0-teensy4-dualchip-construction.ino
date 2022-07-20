@@ -151,9 +151,6 @@ float scale = 104.14; // Bass open string length
 bool bowing = false;
 
 void setup() {
-  Wire1.setSCL(16);
-  Wire1.setSDA(17);
-  
   delay(3000); // 3 second delay for recovery
 
   Serial.begin(115200);
@@ -287,18 +284,18 @@ void bow_action(){
 }
 
 void potcalc(){
-
     read_raw1_ave = 0.0;// some more averaging on the analog reads
     read_raw2_ave = 0.0;  
+    
     for(int i = 0; i <5; i++){      
-    read_raw1 = analogRead(A8);
-    read_raw2 = analogRead(A9);
-    read_raw1_ave = read_raw1_ave + read_raw1;
-    read_raw2_ave = read_raw2_ave + read_raw2;
-}
+      read_raw1 = analogRead(A8);
+      read_raw2 = analogRead(A9);
+      read_raw1_ave = read_raw1_ave + read_raw1;
+      read_raw2_ave = read_raw2_ave + read_raw2;
+    }
+    
     read_raw1_ave = read_raw1_ave/5.0;
     read_raw2_ave = read_raw2_ave/5.0;
-
 
     R_nut =  (float(read_raw2_ave)/(resolution - float(read_raw2_ave)));
     R_bridge =  (float(read_raw1_ave)/(resolution - float(read_raw1_ave)));
@@ -326,10 +323,10 @@ void bow_angle_calc(){
 //q2prime = quat.y();
 //q3prime = -quat.z(); 
 
-q0prime = q0prime; // crazy attempt
-q1prime = 2*q2prime + 2*q3prime - q1prime;
-q2prime = 2*q1prime + q2prime + 2*q3prime;
-q3prime = 2*q2prime - 2*q1prime - q3prime; 
+q0prime = -q2prime; // real solution for new version of bow
+q1prime = -q3prime;
+q2prime = q0prime;
+q3prime = q1prime;
 
 q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
 q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
