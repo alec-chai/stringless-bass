@@ -6,12 +6,10 @@ bugs, and clarifying variable names for future reference.
 
 *********************************************************/
 
+// BF
 
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BNO055.h>
-#include <utility/imumaths.h>
-#define PI 3.141592653    
+//#include "bno055_subs.h"
+ #include "fxa_fxo_subs.h"
 #include <Audio.h>
 #include <SPI.h>
 //#include <SD.h>
@@ -31,7 +29,6 @@ Adafruit_NeoPixel b_pixels(b_NUMPIXELS, b_PIN, NEO_GRB + NEO_KHZ800);
 Adafruit_NeoPixel n_pixels(n_NUMPIXELS, n_PIN, NEO_GRB + NEO_KHZ800);
 
 
-
 // GUItool: begin automatically generated code
 AudioSynthWavetable      string1;          //xy=125,106
 AudioSynthWaveform       waveform1;      //xy=132,61
@@ -49,16 +46,13 @@ AudioConnection          patchCord5(mixer1, dac1);
 // GUItool: end automatically generated code
 
 
-// Check I2C device address and correct line below (by default address is 0x29 or 0x28)
-//                                   id, address
-Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
 double long timer0; // variable to store initial time in micros
 
 // the following variables are for the bow velocity
-float lin_accelx;
+// float lin_accelx;
 float a_x_board = 0.0; //input
 float a_x_board_prev = 0.0;
-float a_x_init;
+float a_x_init = 0;
 float v_x_board = 0.0; //input
 float v_x_board_prev = 0.0;
 float delt = 0.01;
@@ -93,14 +87,6 @@ float read_raw2;
 float read_raw1_ave;
 float read_raw2_ave;
 
-// Pingpong lightshow variables
-int bouncewidth = 20;
-int deeelay = 5;
-uint8_t hue;
-uint8_t trailhue;
-int delaychange = 1;
-
-
 
 // the following store the resistances and finger positions
 // L_bridge is the distance from the finger closest to the bridge to the bridge
@@ -132,7 +118,7 @@ Bounce button0 = Bounce(2, 15);
 int button0_value;
 
 // the following use the gyro velocity about the z-axis to get the pluck signal
-float plucksig;
+// float plucksig;
 float plucksig_prev = 0;
 float pluck_vel;
 
@@ -157,22 +143,23 @@ float chi;
 float chi0 = 0;
 float del_chi;
 float q0,q1,q2,q3;
-float q0prime, q1prime, q2prime, q3prime;
+// float q0prime, q1prime, q2prime, q3prime;
 
 float scale = 104.14; // Bass open string length
 //float scale = 75; // Cello open string length
 
 bool bowing = false;
 
-void setup(void) {
+void setup() {
   delay(3000); // 3 second delay for recovery
 
   Serial.begin(115200);
 
- b_pixels.begin();
+  b_pixels.begin();
   b_pixels.clear();
   n_pixels.begin();
   n_pixels.clear();
+  
   AudioMemory(20);
   
   analogReadResolution(bitnumber);
@@ -203,28 +190,28 @@ void setup(void) {
   filter1.resonance(.8);
   filter1.frequency(2000);
 
-  /* Initialise the sensor */
-  if (!bno.begin())
-  {
-    /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while (1);
-  }
+  // BF
+  
+  //bno055_setup_subs(); 
+  fxa_fxo_setup_subs();
 
   // Initialize the button
   pinMode(2, INPUT_PULLUP);
   
   delay(500);
   waveform1.amplitude(0.0);
-  imu::Vector<3> linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
-    a_x_init = linearaccel.y();// get initial value for acceleration
+  // imu::Vector<3> linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+  //  a_x_init = linearaccel.y();// get initial value for acceleration
 }
 
-void loop(void)
-{
-  button0.update();
+void loop(void) { 
   timer0 = micros();// starts the timer
-  elapsedMillis timervariable;
+  button0.update();
+
+  // BF 
+  
+  //bno055_main_calc();
+  fxa_fxo_main_calc();
   
   potcalc(); //determines fretted string length L_bridge, and also L_nut, L_between
 
@@ -233,6 +220,7 @@ void loop(void)
   if (L_bridge < (3 + (scale - 75.0))) {// zeroes bow angle for standing case
     chi0 = chi; 
   }
+  //Serial.println(filter_scale);
       
 base_freq = stringfreq * scale/L_bridge;  // for continuous
 fretnum = 5* bow_pos + roundup(12.0*log(scale/L_bridge)/(log(2)));
@@ -279,9 +267,11 @@ if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
   }
   bow_action(); // bows the string
 }
-
-Serial.println(timervariable);
-timervariable = 0;
+Serial.print(gx);
+Serial.print("\t ");
+Serial.print(gy);
+Serial.print("\t ");
+Serial.println(gz);
 
 while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
 }
@@ -297,14 +287,14 @@ void potcalc(){
 
     read_raw1_ave = 0.0;// some more averaging on the analog reads
     read_raw2_ave = 0.0;  
-    for(int i = 0; i <16; i++){      
+    for(int i = 0; i <2; i++){      
     read_raw1 = analogRead(A6);
     read_raw2 = analogRead(A7);
     read_raw1_ave = read_raw1_ave + read_raw1;
     read_raw2_ave = read_raw2_ave + read_raw2;
 }
-    read_raw1_ave = read_raw1_ave/16.0;
-    read_raw2_ave = read_raw2_ave/16.0;
+    read_raw1_ave = read_raw1_ave/2.0;
+    read_raw2_ave = read_raw2_ave/2.0;
 
 
     R_nut =  (float(read_raw2_ave)/(resolution - float(read_raw2_ave)));
@@ -316,7 +306,7 @@ if (read_raw1_ave > 0.9*resolution) { // this will be true if string is not fret
   L_between = 0.0; 
 }else{
   // Scaling/calibration
-  L_bridge = (2.84 * R_bridge*R_bridge + 76.8 * R_bridge - 0.163) - 75.0 + scale;
+  L_bridge = (-1.1618 * R_bridge*R_bridge + 74.069 * R_bridge - 0.2172) - 75.0 + scale;
   L_nut =  5.944 * R_nut*R_nut + 66.1 * R_nut - 0.3272;
   L_between = scale - (L_nut + L_bridge); 
 
@@ -326,17 +316,72 @@ if (read_raw1_ave > 0.9*resolution) { // this will be true if string is not fret
 }
 
 void bow_angle_calc(){
-imu::Quaternion quat = bno.getQuat();
+//q0prime = -q0prime; // go through the math
+//q1prime = q1prime;
+//q2prime = q2prime;
+//q3prime = -q3prime;
 
-q0prime = quat.w();
-q1prime = quat.x();
-q2prime = quat.y();
-q3prime = quat.z(); 
+q0prime = q0prime; // real solution for old version of bow
+q1prime = q1prime;
+q2prime = q2prime;
+q3prime = q3prime;
 
-q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
-q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
-q2 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
-q3 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;   
+//q0prime = -q2prime; // real solution for new version of bow
+//q1prime = -q3prime;
+//q2prime = q0prime;
+//q3prime = q1prime;
+
+//q0prime = -q1prime; // rotate by 180 degrees in the x direction
+//q1prime = q0prime;
+//q2prime = -q3prime;
+//q3prime = q2prime;
+//
+//q0prime = -q2prime; // rotate by 180 degrees in the y direction
+//q1prime = q3prime;
+//q2prime = q0prime;
+//q3prime = -q1prime;
+//
+//q0prime = -q3prime; // rotate by 180 degrees in the z direction
+//q1prime = -q2prime;
+//q2prime = q1prime;
+//q3prime = q0prime;
+
+//q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
+//q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
+//q2 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
+//q3 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;
+
+
+float q000 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q3prime;//rotate about z
+float q111 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q2prime;
+float q222 = (sqrt(2)/2) * q2prime - (sqrt(2)/2) * q1prime;
+float q333 = (sqrt(2)/2) * q3prime + (sqrt(2)/2) * q0prime;
+
+float q00 = q000; // nothing
+float q11 = q111;
+float q22 = q222;
+float q33 = q333;
+
+q0 = q00;// do nothing
+q1 = q11;
+q2 = q22;
+q3 = q33;
+
+//q0 = -q11;//rotate about x 180 deg
+//q1 = q00;
+//q2 = -q33;
+//q3 = q22;
+
+//q0 = -q22;//rotate about y 180 deg
+//q1 = q33;
+//q2 = q00;
+//q3 = -q11;
+
+//q0 = -q33;//rotate about z 180 deg
+//q1 = -q22;
+//q2 = q11;
+//q3 = q00;
+
 
 // q0 = (sqrt(2)/2) * q0prime - (sqrt(2)/2) * q1prime;//rotate about x
 // q1 = (sqrt(2)/2) * q1prime + (sqrt(2)/2) * q0prime;
@@ -364,14 +409,13 @@ if (del_chi > 180){
 }
 
 bow_angle = del_chi;
-bow_angle = constrain(bow_angle, -45,60);
+bow_angle = constrain(bow_angle, -45, 60); // DEBUG
 bow_pos_prev = bow_pos;
 bow_pos = map(int(bow_angle), -45,60,0,3);// gets the different strings
 bow_pos = constrain(bow_pos,0,3);
 stringfreq = low_string_freq * pow(1.3348,bow_pos); // upright bass tuned in fourths
 //stringfreq = low_string_freq * pow(1.5,bow_pos); // Cello tuned in fifths
 //stringfreq = 130.8;
-
 if (bow_pos != bow_pos_prev) {
   switch (bow_pos) {
     case 0:    // red
@@ -439,15 +483,14 @@ if (bow_pos != bow_pos_prev) {
 
 void pluckcalc(){
 
-imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);  
-plucksig = gyro.z();
-pluck_vel = 2* (plucksig - plucksig_prev);// factor of 2 just got things in right range
+// imu::Vector<3> gyro = bno.getVector(Adafruit_BNO055::VECTOR_GYROSCOPE);  
+plucksig = -plucksig;
+pluck_vel = 2 * (plucksig - plucksig_prev);// factor of 2 just got things in right range
 pluck_vel = constrain(pluck_vel, 50,300.0);
-//Serial.println(pluck_vel);
 
 if (plucksig <= thresh) {
   binout = 0;
-  thresh = threshH;    
+  thresh = threshH;
 }
 
 if (plucksig > thresh) {
@@ -486,27 +529,21 @@ if (button0.risingEdge()) {
 } // end pluckcalc subroutine
 
 
-void bow_vel_calc() {
-  imu::Vector<3> linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
+void bow_vel_calc(){
+// imu::Vector<3> linearaccel = bno.getVector(Adafruit_BNO055::VECTOR_LINEARACCEL);
     // this takes a bit of time
-  lin_accelx = linearaccel.y();    
+ // lin_accelx = linearaccel.y();    
   a_x_board = lin_accelx - a_x_init;// subtract iff any initial offset
-  out_ax = gammer * out_ax_prev + gammer * ( a_x_board - a_x_board_prev);// high pass accel
+  out_ax = gammer * out_ax_prev + gammer * (a_x_board - a_x_board_prev);// high pass accel
     
 //  v_x_board = alpha * v_x_board_prev + alpha * 0.5 * (out_ax + out_ax_prev) * delt;
   v_x_board =  v_x_board_prev +  out_ax * delt;// integrate accel to get vel
-  out_vx = beta * out_vx_prev + beta * ( v_x_board - v_x_board_prev);//high pass vel
-
-
- // Serial.print(bow_pos);
- // Serial.print("  ");
- // Serial.println(out_vx*out_vx*10);
+  out_vx = beta * out_vx_prev + beta * (v_x_board - v_x_board_prev);//high pass vel
     
   a_x_board_prev = a_x_board;
   out_ax_prev = out_ax;
   v_x_board_prev = v_x_board;
   out_vx_prev = out_vx;
-  
 }
 
 void note_on(){

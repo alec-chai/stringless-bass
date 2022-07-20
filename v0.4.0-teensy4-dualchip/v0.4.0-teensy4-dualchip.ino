@@ -151,6 +151,9 @@ float scale = 104.14; // Bass open string length
 bool bowing = false;
 
 void setup() {
+  Wire1.setSCL(16);
+  Wire1.setSDA(17);
+  
   delay(3000); // 3 second delay for recovery
 
   Serial.begin(115200);
@@ -270,11 +273,8 @@ if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
   }
   bow_action(); // bows the string
 }
-Serial.print(gx);
-Serial.print("\t ");
-Serial.print(gy);
-Serial.print("\t ");
-Serial.println(gz);
+
+Serial.println(base_freq);
 
 while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
 }
@@ -290,14 +290,14 @@ void potcalc(){
 
     read_raw1_ave = 0.0;// some more averaging on the analog reads
     read_raw2_ave = 0.0;  
-    for(int i = 0; i <2; i++){      
+    for(int i = 0; i <5; i++){      
     read_raw1 = analogRead(A8);
     read_raw2 = analogRead(A9);
     read_raw1_ave = read_raw1_ave + read_raw1;
     read_raw2_ave = read_raw2_ave + read_raw2;
 }
-    read_raw1_ave = read_raw1_ave/2.0;
-    read_raw2_ave = read_raw2_ave/2.0;
+    read_raw1_ave = read_raw1_ave/5.0;
+    read_raw2_ave = read_raw2_ave/5.0;
 
 
     R_nut =  (float(read_raw2_ave)/(resolution - float(read_raw2_ave)));

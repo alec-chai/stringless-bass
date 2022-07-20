@@ -1,4 +1,3 @@
-#include <Wire.h>
 #include <Adafruit_Sensor_Calibration.h>
 #include <Adafruit_AHRS.h>
 
@@ -7,12 +6,8 @@ Adafruit_Sensor *accelerometer, *gyroscope, *magnetometer;
 #include <Adafruit_FXAS21002C.h>
 #include <Adafruit_FXOS8700.h>
 
-//Adafruit_FXOS8700 fxos = Adafruit_FXOS8700(0x8700A, 0x8700B);
-//Adafruit_FXAS21002C fxas = Adafruit_FXAS21002C(0x0021002C);
-
 Adafruit_FXOS8700 fxos = Adafruit_FXOS8700(0x8700A, 0x8700B);
 Adafruit_FXAS21002C fxas = Adafruit_FXAS21002C(0x0021002C);
-
 Adafruit_NXPSensorFusion filter; // slowest
 
 #define FILTER_UPDATE_RATE_HZ 100
@@ -59,15 +54,6 @@ float plucksig;
 float lin_accelx;
 
 bool init_sensors(void) {
-  if (!fxos.begin()) {
-    Serial.println("Cannot detect fxos");
-  }
-
-  if (!fxas.begin()) {
-    Serial.println("Cannot detect fxas");
-  }
-
-  
   if (!fxos.begin() || !fxas.begin()) {
     return false;
   }
