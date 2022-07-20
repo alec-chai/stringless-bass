@@ -150,6 +150,8 @@ float scale = 104.14; // Bass open string length
 
 bool bowing = false;
 
+int mode = 2;
+
 void setup() {
   delay(3000); // 3 second delay for recovery
 
@@ -204,7 +206,7 @@ void setup() {
   //  a_x_init = linearaccel.y();// get initial value for acceleration
 }
 
-void loop(void) { 
+/*void loop(void) { 
   timer0 = micros();// starts the timer
   button0.update();
 
@@ -272,6 +274,129 @@ if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
 }
 
 Serial.println(base_freq);
+
+while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
+}
+} */
+
+void loop() {
+ switch (mode) {
+    case 1: // velocity-based bowing
+    velocityLoop();
+      break;
+
+    case 2: // softpot only to play notes
+    softpotLoop();
+    
+      break;
+  }
+}
+void softpotLoop() { // mode 2
+  timer0 = micros();
+  fxa_fxo_main_calc();
+  potcalc();
+  bow_angle_calc();
+
+  if (L_bridge < (3 + (scale - 75.0))) {// zeroes bow angle for standing case
+    chi0 = chi; 
+  }
+
+  base_freq = stringfreq * scale/L_bridge;  // for continuous
+  fretnum = 5* bow_pos + roundup(12.0*log(scale/L_bridge)/(log(2)));
+  base_freq_discrete = low_string_freq * pow(2,float(fretnum)/12.0); // for discrete
+
+  waveform1.frequency(base_freq);
+
+  if (L_bridge > 3) {
+    envelope1.sustain(1.0);
+    envelope1.noteOn();
+    bowing = true;
+  }
+
+  if (L_bridge <= 3){
+ // waveform1.amplitude(0.0);
+    envelope1.noteOff();
+    bowing = false;
+  }
+
+  if(bowing) {
+    waveform1.amplitude(1);
+  }
+
+  Serial.println(base_freq);
+  Serial.println(L_nut);
+
+  while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
+  }
+}
+
+
+void velocityLoop() { // mode 1
+  timer0 = micros();// starts the timer
+  button0.update();
+
+  // BF 
+  
+  // bno055_main_calc();
+  fxa_fxo_main_calc();
+  
+  potcalc(); // calculate softpot "string lengths"
+  
+  bow_angle_calc(); // determines euler angles then bow_pos/stringfreq
+                    // Also lights up the proper LEDs in bow/body
+
+  if (L_bridge < (3 + (scale - 75.0))) {// zeroes bow angle for standing case
+    chi0 = chi; 
+  }
+
+  base_freq = stringfreq * scale/L_bridge;  // for continuous
+fretnum = 5* bow_pos + roundup(12.0*log(scale/L_bridge)/(log(2)));
+base_freq_discrete = low_string_freq * pow(2,float(fretnum)/12.0); // for discrete
+bow_vel_calc(); //determines a bow velocity out_vx
+
+waveform1.frequency(base_freq);
+
+if (string1.isPlaying()) {
+  string1.setFrequency(base_freq);
+}
+
+if (button0.fallingEdge()) {
+  envelope1.sustain(1.0);
+  envelope1.noteOn();
+  bowing = true;
+}
+
+if (button0.risingEdge()){
+ // waveform1.amplitude(0.0);
+    envelope1.noteOff();
+    bowing = false;
+}
+
+if(bowing) {
+   // float amp = abs(out_vx);
+    float amp = out_vx * out_vx;
+   //Serial.println(amp, 8);
+    if(amp <= .0003) {
+      amp = 0.0;
+    }
+    amp = pow(amp, 0.3);
+    waveform1.amplitude(amp);
+  }
+
+if ((phi < 130) && (phi > 50)) {// is bow in plucking position?
+  if (note_off_flag == 0){
+    note_off_flag = 1;  
+  }
+pluckcalc();//calculates when a pluck has occurred and plays a plucked note
+}
+
+if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
+  if (note_off_flag == 1) {
+    note_off();
+    note_off_flag = 0; 
+  }
+  bow_action(); // bows the string
+}
 
 while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
 }
