@@ -22,7 +22,7 @@ bugs, and clarifying variable names for future reference.
 #define n_PIN        4 // neopixel pin
 
 // How many NeoPixels are attached to the Arduino?
-#define b_NUMPIXELS 28 // 
+#define b_NUMPIXELS 16 // 
 Adafruit_NeoPixel b_pixels(b_NUMPIXELS, b_PIN, NEO_GRB + NEO_KHZ800);
 
 #define n_NUMPIXELS 101 // 
@@ -206,79 +206,6 @@ void setup() {
   //  a_x_init = linearaccel.y();// get initial value for acceleration
 }
 
-/*void loop(void) { 
-  timer0 = micros();// starts the timer
-  button0.update();
-
-  // BF 
-  
-  // bno055_main_calc();
-  fxa_fxo_main_calc();
-  
-  potcalc(); //determines fretted string length L_bridge, and also L_nut, L_between
-
-  bow_angle_calc();  //determines bow_pos and stringfreq, also produces theta, phi, chi
-  
-  if (L_bridge < (3 + (scale - 75.0))) {// zeroes bow angle for standing case
-    chi0 = chi; 
-  }
-  //Serial.println(filter_scale);
-      
-base_freq = stringfreq * scale/L_bridge;  // for continuous
-fretnum = 5* bow_pos + roundup(12.0*log(scale/L_bridge)/(log(2)));
-base_freq_discrete = low_string_freq * pow(2,float(fretnum)/12.0); // for discrete
-bow_vel_calc(); //determines a bow velocity out_vx
-
-waveform1.frequency(base_freq);
-
-if (string1.isPlaying()) {
-  string1.setFrequency(base_freq);
-}
-
-if (button0.fallingEdge()) {
-  envelope1.sustain(1.0);
-  envelope1.noteOn();
-  bowing = true;
-}
-
-if (button0.risingEdge()){
- // waveform1.amplitude(0.0);
-    envelope1.noteOff();
-    bowing = false;
-}
-
-if(bowing) {
-   // float amp = abs(out_vx);
-    float amp = out_vx * out_vx;
-   //Serial.println(amp, 8);
-    if(amp <= .0003) {
-      amp = 0.0;
-    }
-    amp = pow(amp, 0.3);
-    waveform1.amplitude(amp);
-  }
-
-if ((phi < 130) && (phi > 50)) {// is bow in plucking position?
-  if (note_off_flag == 0){
-    note_off_flag = 1;  
-  }
-pluckcalc();//calculates when a pluck has occurred and plays a plucked note
-}
-
-if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
-  if (note_off_flag == 1) {
-    note_off();
-    note_off_flag = 0; 
-  }
-  bow_action(); // bows the string
-}
-
-Serial.println(base_freq);
-
-while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
-}
-} */
-
 void loop() {
  switch (mode) {
     case 1: // velocity-based bowing
@@ -291,9 +218,14 @@ void loop() {
       break;
   }
 }
+
 void softpotLoop() { // mode 2
   timer0 = micros();
+
+  // BF 
+  //bno055_main_calc();
   fxa_fxo_main_calc();
+  
   potcalc();
   bow_angle_calc();
 
