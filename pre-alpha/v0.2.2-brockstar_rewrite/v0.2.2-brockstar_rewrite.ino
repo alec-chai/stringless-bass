@@ -57,15 +57,18 @@ AudioConnection          patchCord5(envelope1, 0, mixer1, 0);
 
 // Declare global variables
 uint8_t mode = 1;
-uint8_t bow_pos = 1;
+uint8_t bow_pos, bow_pos_prev = 0;
 
 uint8_t bitnumber = 12;
 
 float phi, theta, chi = 0; // Euler Angles
-uint8_t delta_t = 10; // Integration variable
+float chi0, delta_chi = 0; // Calibration offset
+
+uint8_t delta_t = 10; // Integration variable, represents time steps in ms
 
 void setup() {
   delay(500); // 0.5 second delay for recovery
+
 
   Serial.begin(115200);
 
@@ -102,7 +105,7 @@ void setup() {
 
 
   // BF
-  bno055_setup_subs(); 
+  bno055_setup_subs();
   //fxa_fxo_setup_subs();
 
   pinMode(2, INPUT_PULLUP); // Initialize button
@@ -112,8 +115,9 @@ void setup() {
 
 
 void loop() { // low-level implementation of mode selection, more future-proof
-  EVERY_N_MILLISECONDS(delta_t) {
-    switch (mode) {
+  elapsedMillis timer0 = 0;
+  
+  switch (mode) {
       case 1: // normal bass bowing
       bowingLoop();
         break;
@@ -121,13 +125,19 @@ void loop() { // low-level implementation of mode selection, more future-proof
       case 2: // softpot touch mode
       touchLoop();
         break;
-    }
   }
+  
+  while (timer0 < delta_t) {} //delay to ensure loop is 10 ms
 }
 
 void bowingLoop() {
   calc_euler_angles();
+  calc_bow_position();
+  calc_pot_position();
+  calc_playing_frequency();
   
+  bow_lights();
+  neck_lights();
 }
 
 void touchLoop() {
@@ -144,7 +154,46 @@ void touchLoop() {
  */
 
 void calc_pot_position() {
+  /*
+   * This function determines the position on the potentiometer and
+   * translates it to three different lengths in real space. 
+   * 
+   * This function also includes code that checks for "functions" on 
+   * the softpot ie. calibration of the bow position.
+   */
   
+  uint8_t potaverage = 1; // How many analog reads are read to
+                          // determine pot position
+  
+  for (int i = 0; i < potaverage; i++) {
+    bridge_read = analogRead(A6); // T34 -> A6/A8
+    nut_read = analogRead(A7); // T34 -> A7/A9
+    bridge_ave = bridge_ave + bridge_read;
+    nut_ave = nut_ave + bridge_read;
+  }
+  bridge_ave = bridge_ave / potaverage;
+  nut_ave = nut_ave / potaverage;
+
+  float R_nut =  (float(nut_ave)/(resolution - float(nut_ave)));
+  float R_bridge =  (float(bridge_ave)/(resolution - float(bridge_ave)));
+
+  if (bridge_ave > (0.9 * resolution)) { // this will be true if string is not fretted
+    L_nut = 0.0;
+    L_bridge = open_string_length;
+    L_between = 0.0; 
+  } else {
+    // Scaling/calibration
+    L_bridge = (-1.1618 * R_bridge*R_bridge + 74.069 * R_bridge - 0.2172) - 75.0 + open_string_length;
+    L_nut =  5.944 * R_nut*R_nut + 66.1 * R_nut - 0.3272;
+    L_between = open_string_length - (L_nut + L_bridge); 
+  
+    L_bridge = constrain(L_bridge, 0.0, open_string_length);
+  }
+
+  // Check for calibration condition
+  if (L_bridge < (3 + (open_string_length - 75.0))) {// zeroes bow angle for standing case
+    chi0 = chi; 
+  }
 }
 
 
@@ -163,17 +212,17 @@ void calc_euler_angles() {
   bno055_main_calc(); // stores values for quaternions, "plucksig" (gyro.z() value), and "lin_accelx"
   float qw, qx, qy, qz, qwprime, qxprime, qyprime, qzprime;
 
-  qwprime = q0prime; // Use this chunk if using MPU as mounted on original plates
+  qwprime = q0prime; // Use this chunk if using MPU as mounted on original bows
   qxprime = q1prime;
   qyprime = q2prime;
   qzprime = q3prime;
 
-//  qwprime = -q2prime; // Use this chunk if using MPU as mounted on recent plates (same side as button)
+//  qwprime = -q2prime; // Use this chunk if using MPU as mounted on more recent plates (same side as button)
 //  qxprime = -q3prime; // Rotates quaternions by 180 degrees about the Y axis
 //  qyprime = q0prime;
 //  qzprime = q1prime;
 
-  qw = (sqrt(2)/2) * qwprime - (sqrt(2)/2) * qzprime; //rotate about z-axis 90 degrees
+  qw = (sqrt(2)/2) * qwprime - (sqrt(2)/2) * qzprime; // Rotates about z-axis 90 degrees
   qx = (sqrt(2)/2) * qxprime + (sqrt(2)/2) * qyprime;
   qy = (sqrt(2)/2) * qyprime - (sqrt(2)/2) * qxprime;
   qz = (sqrt(2)/2) * qzprime + (sqrt(2)/2) * qwprime;
@@ -182,11 +231,28 @@ void calc_euler_angles() {
   theta = (360/(2*PI))*asin(2*(qw*qy - qz*qx));
   chi = (360/(2*PI))*atan2(2*(qw*qz + qx*qy), 1 - 2*(qy*qy + qz*qz));
 
+  delta_chi = chi - chi0;
   
+  if (delta_chi < -180) {     // keep del_chi in the correct range from -180 => 180
+    delta_chi = delta_chi +360;
+  }
+
+  if (delta_chi > 180) {
+    delta_chi = delta_chi -360;
+  }
 }
 
-void calc_bow_position() {
-  
+void calc_bow_position() {  // Maps chi angle to one of the four strings on bass/cello
+  float bowing_angle = delta_chi;
+  bowing_angle = constrain(bowing_angle, -45, 60);
+  bow_pos_prev = bow_pos;
+  bow_pos = map(int(bowing_angle), -45, 60, 0, 3);
+}
+
+void calc_playing_frequency() { // Determines which frequencies to play based on pot
+                                  // position and bow position
+  float open_freq = low_string_freq * pow(string_freq_ratio, bow_pos);
+  playing_freq = open_freq * (open_string_length / L_bridge);
 }
 
 void bow_lights() {
@@ -227,9 +293,6 @@ void bow_lights() {
   
       b_pixels.show(); 
         break; 
-
-      default:
-      
     }
   }
 }
@@ -266,8 +329,8 @@ void neck_lights() {
       for (int i=0; i<n_NUMPIXELS; i++) {
         n_pixels.setPixelColor(i, n_pixels.Color(0, 0, 50));
       }
-      n_pixels.show();  
-        break; 
+      n_pixels.show();
+        break;
     }
   }
 }

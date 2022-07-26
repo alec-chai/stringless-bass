@@ -8,8 +8,8 @@ bugs, and clarifying variable names for future reference.
 
 // BF
 
-// #include "bno055_subs.h"
-#include "fxa_fxo_subs.h"
+#include "bno055_subs.h"
+//#include "fxa_fxo_subs.h"
 #include <Audio.h>
 #include <SPI.h>
 //#include <SD.h>
@@ -114,7 +114,7 @@ float low_string_freq = 41.2; // E1 for lowest bass note
 float filter_scale;
 
   //for the button on bow
-Bounce button0 = Bounce(3, 15);
+Bounce button0 = Bounce(2, 15);
 int button0_value;
 
 // the following use the gyro velocity about the z-axis to get the pluck signal
@@ -192,11 +192,13 @@ void setup() {
 
   // BF
   
-  // bno055_setup_subs(); 
-  fxa_fxo_setup_subs();
+  bno055_setup_subs(); 
+  //fxa_fxo_setup_subs();
 
   // Initialize the button
   pinMode(2, INPUT_PULLUP);
+
+  
   
   delay(500);
   waveform1.amplitude(0.0);
@@ -206,12 +208,13 @@ void setup() {
 
 void loop(void) { 
   timer0 = micros();// starts the timer
-  button0.update();
 
+  Serial.println(L_bridge);
+  
   // BF 
   
-  // bno055_main_calc();
-  fxa_fxo_main_calc();
+  bno055_main_calc();
+  //fxa_fxo_main_calc();
   
   potcalc(); //determines fretted string length L_bridge, and also L_nut, L_between
 
@@ -233,16 +236,20 @@ if (string1.isPlaying()) {
   string1.setFrequency(base_freq);
 }
 
+button0.update();
+
 if (button0.fallingEdge()) {
   envelope1.sustain(1.0);
   envelope1.noteOn();
   bowing = true;
+  Serial.println("falling");
 }
 
 if (button0.risingEdge()){
  // waveform1.amplitude(0.0);
     envelope1.noteOff();
     bowing = false;
+      Serial.println("rising");
 }
 
 if(bowing) {
@@ -270,8 +277,6 @@ if ((phi < 40) && (phi > -40)) {// is bow in bowing position?
   }
   bow_action(); // bows the string
 }
-
-Serial.println(base_freq);
 
 while((micros()-timer0)<10000){ // this delays for the remainder of the time up to 10ms
 }
@@ -371,17 +376,11 @@ if (bow_pos != bow_pos_prev) {
     case 0:    // red
     b_pixels.clear();
     
-    b_pixels.setPixelColor(4, b_pixels.Color(50, 0, 0));
-    b_pixels.setPixelColor(5, b_pixels.Color(50, 0, 0));
-    b_pixels.setPixelColor(18, b_pixels.Color(50, 0, 0));
-    b_pixels.setPixelColor(19, b_pixels.Color(50, 0, 0));
-
-    for (int i=20; i<b_NUMPIXELS; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(50, 0, 0));
-    }
-    for (int i=0; i<4; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(50, 0, 0));
-    }
+    b_pixels.setPixelColor(0, b_pixels.Color(50, 0, 0));
+    b_pixels.setPixelColor(1, b_pixels.Color(50, 0, 0));
+    b_pixels.setPixelColor(14, b_pixels.Color(50, 0, 0));
+    b_pixels.setPixelColor(15, b_pixels.Color(50, 0, 0));
+    
     b_pixels.show();
     
     n_pixels.clear();
@@ -394,17 +393,11 @@ if (bow_pos != bow_pos_prev) {
     case 1:    // yellow
     b_pixels.clear();
     
-    b_pixels.setPixelColor(6, b_pixels.Color(50, 50, 0));
-    b_pixels.setPixelColor(7, b_pixels.Color(50, 50, 0));
-    b_pixels.setPixelColor(16, b_pixels.Color(50, 50, 0));
-    b_pixels.setPixelColor(17, b_pixels.Color(50, 50, 0));
+    b_pixels.setPixelColor(2, b_pixels.Color(50, 50, 0));
+    b_pixels.setPixelColor(3, b_pixels.Color(50, 50, 0));
+    b_pixels.setPixelColor(12, b_pixels.Color(50, 50, 0));
+    b_pixels.setPixelColor(13, b_pixels.Color(50, 50, 0));
 
-    for (int i=20; i<b_NUMPIXELS; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(50, 50, 0));
-    }
-    for (int i=0; i<4; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(50, 50, 0));
-    }
     b_pixels.show();
     
     n_pixels.clear();
@@ -417,17 +410,11 @@ if (bow_pos != bow_pos_prev) {
     case 2:    // green
     b_pixels.clear();
     
-    b_pixels.setPixelColor(8, b_pixels.Color(0, 50, 0));
-    b_pixels.setPixelColor(9, b_pixels.Color(0, 50, 0));
-    b_pixels.setPixelColor(14, b_pixels.Color(0, 50, 0));
-    b_pixels.setPixelColor(15, b_pixels.Color(0, 50, 0));
-
-    for (int i=20; i<b_NUMPIXELS; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(0, 50, 0));
-    }
-    for (int i=0; i<4; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(0, 50, 0));
-    }
+    b_pixels.setPixelColor(4, b_pixels.Color(0, 50, 0));
+    b_pixels.setPixelColor(5, b_pixels.Color(0, 50, 0));
+    b_pixels.setPixelColor(10, b_pixels.Color(0, 50, 0));
+    b_pixels.setPixelColor(11, b_pixels.Color(0, 50, 0));
+    
     b_pixels.show();
     
     n_pixels.clear();
@@ -440,17 +427,11 @@ if (bow_pos != bow_pos_prev) {
     case 3:    // blue
     b_pixels.clear();
     
-    b_pixels.setPixelColor(10, b_pixels.Color(0, 0, 50));
-    b_pixels.setPixelColor(11, b_pixels.Color(0, 0, 50));
-    b_pixels.setPixelColor(12, b_pixels.Color(0, 0, 50));
-    b_pixels.setPixelColor(13, b_pixels.Color(0, 0, 50));
+    b_pixels.setPixelColor(6, b_pixels.Color(0, 0, 50));
+    b_pixels.setPixelColor(7, b_pixels.Color(0, 0, 50));
+    b_pixels.setPixelColor(8, b_pixels.Color(0, 0, 50));
+    b_pixels.setPixelColor(9, b_pixels.Color(0, 0, 50));
 
-    for (int i=20; i<b_NUMPIXELS; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(0, 0, 50));
-    }
-    for (int i=0; i<4; i++) {
-      b_pixels.setPixelColor(i, b_pixels.Color(0, 0, 50));
-    }
     b_pixels.show();
     
     n_pixels.clear();
