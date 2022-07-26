@@ -60,6 +60,22 @@ uint8_t mode = 1;
 uint8_t bow_pos, bow_pos_prev = 0;
 
 uint8_t bitnumber = 12;
+float resolution = pow(2,bitnumber);
+
+float bridge_read, nut_read, bridge_ave, nut_ave = 0;
+float L_bridge, L_nut, L_between = 0;
+
+// Bass/Cello
+float open_string_length = 104.14; // Upright bass
+float low_string_freq = 41.2; // E1
+float string_freq_ratio = 1.3348; // tuned in fourths
+
+//float open_string_length = 75; // Cello
+//float low_string_freq = 65.4; // C2
+//float string_freq_ratio = 1.5; // tuned in fifths
+
+
+float playing_freq = 0;
 
 float phi, theta, chi = 0; // Euler Angles
 float chi0, delta_chi = 0; // Calibration offset
