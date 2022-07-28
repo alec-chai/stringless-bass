@@ -8,8 +8,8 @@ bugs, and clarifying variable names for future reference.
 
 // BF
 
-#include "bno055_subs.h"
-//#include "fxa_fxo_subs.h"
+//#include "bno055_subs.h"
+#include "fxa_fxo_subs.h"
 #include <Audio.h>
 #include <SPI.h>
 //#include <SD.h>
@@ -192,8 +192,8 @@ void setup() {
 
   // BF
   
-  bno055_setup_subs(); 
-  //fxa_fxo_setup_subs();
+  //bno055_setup_subs(); 
+  fxa_fxo_setup_subs();
 
   // Initialize the button
   pinMode(2, INPUT_PULLUP);
@@ -213,8 +213,8 @@ void loop(void) {
   
   // BF 
   
-  bno055_main_calc();
-  //fxa_fxo_main_calc();
+  //bno055_main_calc();
+  fxa_fxo_main_calc();
   
   potcalc(); //determines fretted string length L_bridge, and also L_nut, L_between
 

@@ -6,6 +6,8 @@
 // Check I2C device address and correct line below (by default address is 0x29 or 0x28)
 //                                   id, address
 Adafruit_BNO055 bno = Adafruit_BNO055(-1, 0x28);
+
+bool using_bno  = true;
 float q0prime, q1prime, q2prime, q3prime;
 float plucksig;
 float lin_accelx;
@@ -43,7 +45,19 @@ void bno055_setup_subs(void){
   if (!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
-    while (1);
+    // Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+    using_bno = false;
+  } else {
+    using_bno = true;
   }
 }
+
+//void bno055_setup_subs(void){
+//  /* Initialise the sensor */
+//  if (!bno.begin())
+//  {
+//    /* There was a problem detecting the BNO055 ... check your connections */
+//    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+//    while (1);
+//  }
+//}

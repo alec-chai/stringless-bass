@@ -12,6 +12,8 @@ Adafruit_NXPSensorFusion filter; // slowest
 
 #define FILTER_UPDATE_RATE_HZ 100
 
+bool using_fxofxa;
+
 float linx, liny, linz;// these will be the linear acceleration values with no gravity
 
 float gyrox_off = 0.00808;
@@ -49,18 +51,20 @@ float mx, my, mz;
 float magx, magy, magz;//these are temp values to do the matrix multiplication for mag calib
 float qw, qx, qy, qz;//these are the raw quat values
 
-float q0prime, q1prime, q2prime, q3prime;//quat values rotated to match bno055 quats
-float plucksig;
-float lin_accelx;
+//float q0prime, q1prime, q2prime, q3prime;//quat values rotated to match bno055 quats
+//float plucksig;
+//float lin_accelx;
 
 bool init_sensors(void) {
   if (!fxos.begin() || !fxas.begin()) {
+    using_fxofxa = true;
     return false;
   }
   accelerometer = fxos.getAccelerometerSensor();
   gyroscope = &fxas;
   magnetometer = fxos.getMagnetometerSensor();
 
+  using_fxofxa = true;
   return true;
 }
 
@@ -68,9 +72,14 @@ void setup_sensors(void) {}
 
 void fxa_fxo_setup_subs(void){
   if (!init_sensors()) {
-    Serial.println("Failed to find sensors");
-    while (1) delay(10);
+    //Serial.println("Failed to find sensors");
   }
+
+//void fxa_fxo_setup_subs(void){
+//  if (!init_sensors()) {
+//    Serial.println("Failed to find sensors");
+//    while (1) delay(10);
+//  }
 
   setup_sensors();
   filter.begin(FILTER_UPDATE_RATE_HZ);
