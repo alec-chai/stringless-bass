@@ -8,8 +8,8 @@ bugs, and clarifying variable names for future reference.
 
 // BF
 
-#include "bno055_subs.h"
-//#include "fxa_fxo_subs.h"
+//#include "bno055_subs.h"
+#include "fxa_fxo_subs.h"
 #include <Audio.h>
 #include <SPI.h>
 //#include <SD.h>
@@ -192,8 +192,8 @@ void setup() {
 
   // BF
   
-  bno055_setup_subs(); 
-  //fxa_fxo_setup_subs();
+  //bno055_setup_subs(); 
+  fxa_fxo_setup_subs();
 
   // Initialize the button
   pinMode(2, INPUT_PULLUP);
@@ -213,8 +213,8 @@ void loop(void) {
   
   // BF 
   
-  bno055_main_calc();
-  //fxa_fxo_main_calc();
+  //bno055_main_calc();
+  fxa_fxo_main_calc();
   
   potcalc(); //determines fretted string length L_bridge, and also L_nut, L_between
 
@@ -311,7 +311,7 @@ if (read_raw1_ave > 0.9*resolution) { // this will be true if string is not fret
   L_between = 0.0; 
 }else{
   // Scaling/calibration
-  L_bridge = (-1.1618 * R_bridge*R_bridge + 74.069 * R_bridge - 0.2172) - 75.0 + scale;
+  L_bridge = (-3.336 * R_bridge*R_bridge + 83.34 * R_bridge - 0.528) - 75.0 + scale;
   L_nut =  5.944 * R_nut*R_nut + 66.1 * R_nut - 0.3272;
   L_between = scale - (L_nut + L_bridge); 
 

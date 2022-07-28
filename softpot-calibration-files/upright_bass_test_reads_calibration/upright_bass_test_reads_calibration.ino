@@ -33,7 +33,7 @@ void loop(void) {
 
 void potcalc(){
 
-      read_raw1 = analogRead(A6);
+      read_raw1 = analogRead(A8);
 //      Serial.println(read_raw1);
 //Serial.println(flag);
   // print out the value you read:
@@ -42,8 +42,8 @@ void potcalc(){
     read_raw1_ave = 0.0;
     read_raw2_ave = 0.0;  
     for(int i = 0; i <16; i++){      
-    read_raw1 = analogRead(A6);
-    read_raw2 = analogRead(A7);
+    read_raw1 = analogRead(A8);
+    read_raw2 = analogRead(A9);
 //    Serial.print(read_raw1);
 //    Serial.print("   ");   
 //    Serial.println(read_raw2);

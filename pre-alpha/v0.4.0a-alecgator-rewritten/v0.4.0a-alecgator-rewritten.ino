@@ -17,6 +17,7 @@ the Teensy 3.2 and Teensy 4.0 with PT8211 chip, search for "T34"
 #include "bno055_subs.h"
 //#include "fxa_fxo_subs.h"
 
+#include <Bounce.h>
 #include <Audio.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -56,14 +57,14 @@ AudioConnection          patchCord5(envelope1, 0, mixer1, 0);
 
 
 // Declare global variables
-uint8_t mode = 1;
+uint8_t mode = 2;
 uint8_t bow_pos, bow_pos_prev = 0;
 
 uint8_t bitnumber = 12;
 float resolution = pow(2,bitnumber);
 
 float bridge_read, nut_read, bridge_ave, nut_ave = 0;
-float L_bridge, L_nut, L_between = 0;
+float L_bridge, L_nut, L_between, L_nut_prev = 0;
 
 // Bass/Cello
 float open_string_length = 104.14; // Upright bass
@@ -81,6 +82,8 @@ float phi, theta, chi = 0; // Euler Angles
 float chi0, delta_chi = 0; // Calibration offset
 
 uint8_t delta_t = 10; // Integration variable, represents time steps in ms
+
+Bounce button0 = Bounce(2, 15);
 
 void setup() {
   delay(500); // 0.5 second delay for recovery
@@ -147,27 +150,37 @@ void loop() { // low-level implementation of mode selection, more future-proof
 }
 
 void bowingLoop() {
+  button0.update();
   calc_euler_angles();
   calc_bow_position();
   calc_pot_position();
   calc_playing_frequency();
-  
+  if (button0.fallingEdge()) {
+    play_bowed_notes();
+  }
+  if (button0.risingEdge()) {
+    stop_bowed_notes();
+  }
   bow_lights();
   neck_lights();
 }
 
 void touchLoop() {
-  
+  calc_euler_angles();
+  calc_bow_position();
+  calc_pot_position();
+  calc_playing_frequency();
+  if (L_nut > 1 && L_nut_prev <= 1) {
+    play_bowed_notes();
+  }
+  if (L_nut <= 1 && L_nut_prev > 1) {
+    stop_bowed_notes();
+  }
+  bow_lights();
+  neck_lights();
 }
 
-// Subroutines needed:
-/*  Determine pot position
- *  Determine bow position/which string to play
- *  Determine bow velocity
- *  Turn notes on
- *  Turn notes off
- *  Light up bow and neck separately
- */
+// TODO - determine bow velocity and map to amplitude
 
 void calc_pot_position() {
   /*
@@ -178,12 +191,14 @@ void calc_pot_position() {
    * the softpot ie. calibration of the bow position.
    */
   
-  uint8_t potaverage = 1; // How many analog reads are read to
+  uint8_t potaverage = 5; // How many analog reads are read to
                           // determine pot position
+  bridge_ave = 0;
+  nut_ave = 0;
   
   for (int i = 0; i < potaverage; i++) {
-    bridge_read = analogRead(A6); // T34 -> A6/A8
-    nut_read = analogRead(A7); // T34 -> A7/A9
+    bridge_read = analogRead(A8); // T34 -> A6/A8
+    nut_read = analogRead(A9); // T34 -> A7/A9
     bridge_ave = bridge_ave + bridge_read;
     nut_ave = nut_ave + bridge_read;
   }
@@ -193,13 +208,16 @@ void calc_pot_position() {
   float R_nut =  (float(nut_ave)/(resolution - float(nut_ave)));
   float R_bridge =  (float(bridge_ave)/(resolution - float(bridge_ave)));
 
+  // Save previous L_nut
+  L_nut_prev = L_nut;
+
   if (bridge_ave > (0.9 * resolution)) { // this will be true if string is not fretted
     L_nut = 0.0;
     L_bridge = open_string_length;
     L_between = 0.0; 
   } else {
     // Scaling/calibration
-    L_bridge = (-1.1618 * R_bridge*R_bridge + 74.069 * R_bridge - 0.2172) - 75.0 + open_string_length;
+    L_bridge = (-3.336 * R_bridge*R_bridge + 83.34 * R_bridge - 0.528) - 75.0 + open_string_length;
     L_nut =  5.944 * R_nut*R_nut + 66.1 * R_nut - 0.3272;
     L_between = open_string_length - (L_nut + L_bridge); 
   
@@ -210,6 +228,7 @@ void calc_pot_position() {
   if (L_bridge < (3 + (open_string_length - 75.0))) {// zeroes bow angle for standing case
     chi0 = chi; 
   }
+
 }
 
 
@@ -228,15 +247,15 @@ void calc_euler_angles() {
   bno055_main_calc(); // stores values for quaternions, "plucksig" (gyro.z() value), and "lin_accelx"
   float qw, qx, qy, qz, qwprime, qxprime, qyprime, qzprime;
 
-  qwprime = q0prime; // Use this chunk if using MPU as mounted on original bows
-  qxprime = q1prime;
-  qyprime = q2prime;
-  qzprime = q3prime;
+//  qwprime = q0prime; // Use this chunk if using MPU as mounted on original bows
+//  qxprime = q1prime;
+//  qyprime = q2prime;
+//  qzprime = q3prime;
 
-//  qwprime = -q2prime; // Use this chunk if using MPU as mounted on more recent plates (same side as button)
-//  qxprime = -q3prime; // Rotates quaternions by 180 degrees about the Y axis
-//  qyprime = q0prime;
-//  qzprime = q1prime;
+  qwprime = -q2prime; // Use this chunk if using MPU as mounted on more recent plates (same side as button)
+  qxprime = -q3prime; // Rotates quaternions by 180 degrees about the Y axis
+  qyprime = q0prime;
+  qzprime = q1prime;
 
   qw = (sqrt(2)/2) * qwprime - (sqrt(2)/2) * qzprime; // Rotates about z-axis 90 degrees
   qx = (sqrt(2)/2) * qxprime + (sqrt(2)/2) * qyprime;
@@ -266,9 +285,22 @@ void calc_bow_position() {  // Maps chi angle to one of the four strings on bass
 }
 
 void calc_playing_frequency() { // Determines which frequencies to play based on pot
-                                  // position and bow position
+                                  // position and bow position and sets waveforms to it
   float open_freq = low_string_freq * pow(string_freq_ratio, bow_pos);
   playing_freq = open_freq * (open_string_length / L_bridge);
+  waveform1.frequency(playing_freq);
+}
+
+void play_bowed_notes() { // Outputs bowed note sounds through DAC/PT8211 chip
+  waveform1.amplitude(1);
+  envelope1.sustain(1.0);
+  envelope1.noteOn();
+}
+
+void stop_bowed_notes() { // Stops output of bowed note sounds through DAC/PT8211 chip
+  waveform1.amplitude(0);
+  envelope1.sustain(1.0);
+  envelope1.noteOff();
 }
 
 void bow_lights() {
@@ -277,37 +309,45 @@ void bow_lights() {
       case 0:    // red
       b_pixels.clear();
       
+      b_pixels.setPixelColor(0, b_pixels.Color(50, 0, 0));
       b_pixels.setPixelColor(1, b_pixels.Color(50, 0, 0));
-      b_pixels.setPixelColor(8, b_pixels.Color(50, 0, 0));
-  
-      b_pixels.show(); 
+      b_pixels.setPixelColor(14, b_pixels.Color(50, 0, 0));
+      b_pixels.setPixelColor(15, b_pixels.Color(50, 0, 0));
+      
+      b_pixels.show();
         break;
         
       case 1:    // yellow
       b_pixels.clear();
       
       b_pixels.setPixelColor(2, b_pixels.Color(50, 50, 0));
-      b_pixels.setPixelColor(7, b_pixels.Color(50, 50, 0));
+      b_pixels.setPixelColor(3, b_pixels.Color(50, 50, 0));
+      b_pixels.setPixelColor(12, b_pixels.Color(50, 50, 0));
+      b_pixels.setPixelColor(13, b_pixels.Color(50, 50, 0));
   
-      b_pixels.show();  
+      b_pixels.show();
         break;
         
       case 2:    // green
       b_pixels.clear();
-      
-      b_pixels.setPixelColor(3, b_pixels.Color(0, 50, 0));
-      b_pixels.setPixelColor(6, b_pixels.Color(0, 50, 0));
-  
-      b_pixels.show();  
+    
+      b_pixels.setPixelColor(4, b_pixels.Color(0, 50, 0));
+      b_pixels.setPixelColor(5, b_pixels.Color(0, 50, 0));
+      b_pixels.setPixelColor(10, b_pixels.Color(0, 50, 0));
+      b_pixels.setPixelColor(11, b_pixels.Color(0, 50, 0));
+    
+      b_pixels.show();
         break;
         
       case 3:    // blue
       b_pixels.clear();
-      
-      b_pixels.setPixelColor(4, b_pixels.Color(0, 0, 50));
-      b_pixels.setPixelColor(5, b_pixels.Color(0, 0, 50));
-  
-      b_pixels.show(); 
+    
+      b_pixels.setPixelColor(6, b_pixels.Color(0, 0, 50));
+      b_pixels.setPixelColor(7, b_pixels.Color(0, 0, 50));
+      b_pixels.setPixelColor(8, b_pixels.Color(0, 0, 50));
+      b_pixels.setPixelColor(9, b_pixels.Color(0, 0, 50));
+
+      b_pixels.show();
         break; 
     }
   }

@@ -311,7 +311,7 @@ if (read_raw1_ave > 0.9*resolution) { // this will be true if string is not fret
   L_between = 0.0; 
 }else{
   // Scaling/calibration
-  L_bridge = (-1.1618 * R_bridge*R_bridge + 74.069 * R_bridge - 0.2172) - 75.0 + scale;
+  L_bridge = (22.407 * R_bridge*R_bridge + 65.198 * R_bridge + 2.4936) - 75.0 + scale;
   L_nut =  5.944 * R_nut*R_nut + 66.1 * R_nut - 0.3272;
   L_between = scale - (L_nut + L_bridge); 
 
