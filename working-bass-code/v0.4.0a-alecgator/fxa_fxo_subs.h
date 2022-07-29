@@ -57,7 +57,7 @@ float qw, qx, qy, qz;//these are the raw quat values
 
 bool init_sensors(void) {
   if (!fxos.begin() || !fxas.begin()) {
-    using_fxofxa = true;
+    using_fxofxa = false;
     return false;
   }
   accelerometer = fxos.getAccelerometerSensor();
